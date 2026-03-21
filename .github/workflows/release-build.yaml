@@ -9,7 +9,7 @@ on:
       tag_name:
         description: 'Tag name for the release'
         required: true
-        default: 'v2.6.1-Beta.19'
+        default: 'v2.6.2-Beta.3'
 
 permissions:
   contents: write
@@ -22,9 +22,8 @@ env:
   VERSION: ${{ github.event.inputs.tag_name || github.ref_name }}
   RELEASE_DIR: release
   RELEASE_NOTICES: |
-    - [👏] 适配青书学堂资料任务
-    
-    
+    - [🔧] 修复海旗科技普通模式概率触发无法正常提交进度问题（注意使用海旗科技accountType要改成HQKJ）
+
     
     学习通用户注意：
         如果学习通课程中有前置任务点完成才能解锁后续任务的不能使用多任务点模式！！！（多任务点模式会失效）
@@ -47,10 +46,10 @@ jobs:
           - os: windows-latest
             arch: amd64
             goos: windows
-          - os: macos-latest
+          - os: macos-15
             arch: amd64
             goos: darwin
-          - os: macos-latest
+          - os: macos-15
             arch: arm64
             goos: darwin
           # 如果需要 armv7 (32位) 交叉编译，加下面一行
