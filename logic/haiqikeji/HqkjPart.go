@@ -75,9 +75,7 @@ func userBlock(setting config.Setting, user *config.User, cache *hqkjApi.HqkjUse
 		//if course.Offline != 1 { //结束的课程过滤掉
 		//	continue
 		//}
-		if course.StartDate.After(time.Now()) || course.EndDate.Before(time.Now()) { //过滤掉过时课程
-			continue
-		}
+		//if course.StartDate.After(time.Now()) || course.EndDate.Before(time.Now()) { //过滤掉过时课程
 		coursesLock.Add(1)
 		go func() {
 			nodeListStudy(setting, user, cache, &course) //多携程刷课
@@ -108,6 +106,10 @@ func nodeListStudy(setting config.Setting, user *config.User, userCache *hqkjApi
 	}
 	//包含指定课程
 	if len(user.CoursesCustom.IncludeCourses) != 0 && !config.CmpCourse(course.Name, user.CoursesCustom.IncludeCourses) {
+		return
+	}
+	if course.StartDate.After(time.Now()) || course.EndDate.Before(time.Now()) { //过滤掉过时课程
+		lg.Print(lg.INFO, fmt.Sprintf("[%s]", global.AccountTypeStr[user.AccountType]), "[", lg.Green, user.Account, lg.Default, "] ", "【", course.Name, "】 >>> ", lg.Default, " ", "该课程的起止时间为：", lg.Red, fmt.Sprintf("[%s ~ %s] ", course.StartDate.Format("2006-01-02"), course.EndDate.Format("2006-01-02")), lg.Yellow, "因未在开课时间内，已跳过该课程")
 		return
 	}
 	//执行刷课---------------------------------
@@ -172,8 +174,12 @@ func normalModeAction(setting config.Setting, user *config.User, UserCache *hqkj
 			if err != nil {
 				lg.Print(lg.INFO, fmt.Sprintf("[%s]", global.AccountTypeStr[user.AccountType]), "提交学时失败：", err.Error())
 			}
-
-			lg.Print(lg.INFO, fmt.Sprintf("[%s]", global.AccountTypeStr[user.AccountType]), "[", lg.Green, user.Account, lg.Default, "] ", "【", course.Name, "】", "【", node.Name, "】 >>> ", "提交状态：", lg.Green, gojsonq.New().JSONString(submitResult).Find("msg").(string), lg.Default, " ", "观看进度：", fmt.Sprintf("%.2f", float64(submitProgress)), "%")
+			msg := gojsonq.New().JSONString(submitResult).Find("msg")
+			if msg != nil {
+				lg.Print(lg.INFO, fmt.Sprintf("[%s]", global.AccountTypeStr[user.AccountType]), "[", lg.Green, user.Account, lg.Default, "] ", "【", course.Name, "】", "【", node.Name, "】 >>> ", "提交状态：", lg.Green, gojsonq.New().JSONString(submitResult).Find("msg").(string), lg.Default, " ", "观看进度：", fmt.Sprintf("%.2f", float64(submitProgress)), "%")
+			} else {
+				lg.Print(lg.INFO, fmt.Sprintf("[%s]", global.AccountTypeStr[user.AccountType]), "[", lg.Green, user.Account, lg.Default, "] ", "【", course.Name, "】", "【", node.Name, "】 >>> ", "提交状态：", lg.Green, gojsonq.New().JSONString(submitResult).Find("msg"), lg.Default, " ", "观看进度：", fmt.Sprintf("%.2f", float64(submitProgress)), "%")
+			}
 			if err != nil {
 				lg.Print(lg.INFO, fmt.Sprintf("[%s]", global.AccountTypeStr[user.AccountType]), "拉取进度错误", err.Error())
 				return
@@ -222,10 +228,10 @@ func fastModeAction(setting config.Setting, user *config.User, UserCache *hqkjAp
 				return
 			}
 			//检查是否看完
-			if progress >= 100 {
-				videosLock.Done()
-				return
-			}
+			//if progress >= 100 {
+			//	videosLock.Done()
+			//	return
+			//}
 
 			var submitResult string
 			//这里采用提交学后进行检查，防止提交的进度没有记录问题
